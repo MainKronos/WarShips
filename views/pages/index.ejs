@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>WarShips</title>
+    <meta name='author' content="MainKronos">
+    <meta name="description" content="WarShips Multiplayer">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="public/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="public/css/balloon.css" />
+    <link rel="stylesheet" type="text/css" href="public/css/waves.css" />
+    <script language="javascript" type="text/javascript" src="../public/js/helpers.js"></script>
+    <script language="javascript" type="text/javascript" src="../public/js/Clipboard.js"></script>
+</head>
+
+<body>
+    <main>
+        <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+            <defs>
+                <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+            </defs>
+            <g class="parallax">
+                <use xlink:href="#gentle-wave" x="48" y="7" />
+                <use xlink:href="#gentle-wave" x="48" y="0" />
+                <use xlink:href="#gentle-wave" x="48" y="3" />
+                <use xlink:href="#gentle-wave" x="48" y="5" />
+            </g>
+        </svg>
+        <div id="center">
+            <div id="splash">
+                <div id='title'>
+                    <div class='title-word'>WAR</div>
+                    <div class='title-word'>&nbsp;&nbsp;&nbsp;&nbsp;SHIPS</div>
+                </div>
+                <button onclick="switchState('mode')" style="transform: translateY(-10%);" class="fill"
+                    id="multiplayer">
+                    <p class='text'>Play</p>
+                </button>
+            </div>
+            <div id="share" class="card noDisplay">
+                <button onclick="switchState('sessions')" class="square-button triangle button-top-left point"></button>
+                <p class='text'>Share
+                    game
+                    link:</p>
+                <div id="link-wrapper">
+                    <label>
+                        <button id="copy" class="square-button point" onclick="copy()" aria-label="copied!"
+                            data-balloon-pos="up">
+                            <div class="copy"></div>
+                        </button>
+                    </label>
+                    <input contenteditable="true" readonly='true' id="link">
+                </div>
+                <button class="button fill" id="play">
+                    <p class='text'>Play</p>
+                </button>
+            </div>
+            <div id="mode" class="card noDisplay">
+                <button onclick="switchState('splash')" class="square-button triangle point button-top-left"></button>
+                <button id="playWithFriend" class="mode-button loader-right">
+                    <p class='text'>Play with friend</p>
+                </button>
+                
+            </div>
+            <div id="matchmaking" class="card noDisplay">
+                <button onclick="switchState('mode')" class="square-button triangle point button-top-left"></button>
+                <p>Coming soon!</p>
+            </div>
+            <div id="sessions" class="card noDisplay">
+                <button onclick="switchState('mode')" class="square-button triangle point button-top-left"></button>
+                <p class='text' id="sessions-header">Resume or create game</p>
+                <div id='sessions-buttons'>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+</body>
+<script>
+    let sessionGamesID = <%- JSON.stringify(gamesID) %>;
+    const maxSessions = <%- maxSessions %>;
+    const splash = select('#splash');
+    const share = select('#share');
+    const sessions = select('#sessions');
+    const sessionsButtons = select('#sessions-buttons');
+    const link = select('#link');
+    const playButton = select('#play');
+    const mode = select('#mode')
+    const copyButton = select('#copy');
+    const matchmaking = select('#matchmaking');
+    const playWithFriend = select('#playWithFriend');
+    const playRandom = select('#playRandom');
+    const states = [splash, share, sessions, mode, matchmaking];
+    const loader = document.createElement('div');
+    const sessionsHeader = document.getElementById('sessions-header');
+
+    loader.classList.add('loader');
+    for (let i = 0; i < 12; i++) {
+        const div = document.createElement('div');
+        loader.appendChild(div);
+    }
+
+    function sessionGamesIDChanged() {
+        playWithFriend.onclick = function () {
+            if (sessionGamesID.length == 0) {
+                init(this);
+            } else {
+                switchState('sessions');
+            }
+        }
+
+        if (sessionGamesID.length == 3) {
+            editText(sessionsHeader, "Resume game");
+        }
+
+    }
+
+
+
+    function editText(el, text) {
+        const textNode = document.createTextNode(text);
+        el.innerHTML = '';
+        el.appendChild(textNode);
+    }
+
+    function switchState(state) {
+        switch (state) {
+            case 'splash':
+                states.map(x => x.classList.add('noDisplay'));
+                splash.classList.remove('noDisplay');
+                break;
+            case 'share':
+                states.map(x => x.classList.add('noDisplay'));
+                share.classList.remove('noDisplay');
+                break;
+            case 'sessions':
+                states.map(x => x.classList.add('noDisplay'));
+                sessionGamesIDChanged();
+                appendSessionButtons(sessionGamesID);
+                sessions.classList.remove('noDisplay');
+                break;
+            case 'mode':
+                states.map(x => x.classList.add('noDisplay'));
+                sessionGamesIDChanged();
+                mode.classList.remove('noDisplay');
+                break;
+            case 'matchmaking':
+                states.map(x => x.classList.add('noDisplay'));
+                matchmaking.classList.remove('noDisplay');
+                break;
+            default:
+                break;
+        }
+    }
+
+    function copy() {
+        Clipboard.copy(link.getAttribute('value'));
+        copyButton.setAttribute('data-balloon-visible', '');
+        setTimeout(() => { copyButton.removeAttribute('data-balloon-visible') }, 2000);
+    };
+
+    function shareGame(g) {
+        switchState('share');
+        link.setAttribute('value', `${window.location.origin}/play/${g}`);
+        playButton.onclick = function () { play(g) };
+        if (!isOS())
+            copy();
+
+    }
+
+    function appendSessionButtons(gamesID) {
+        sessionsButtons.innerHTML = '';
+        const buttons = [];
+        for (const g of gamesID) {
+            const button = document.createElement('button');
+            button.classList.add('square-button', 'sessions-button');
+            button.onclick = function () { play(g) };
+            const p = document.createElement('p');
+            p.classList.add('text');
+            const text = document.createTextNode(buttons.length + 1);
+            p.appendChild(text);
+            button.appendChild(p);
+            buttons.push(button);
+        }
+        for (let j = buttons.length; j < maxSessions; j++) {
+            const button = document.createElement('button');
+            button.classList.add('square-button', 'sessions-button', 'create', 'plus', 'loader-center');
+            button.onclick = function () {
+                const requestingGame = buttons.some(b => b.classList.contains('flood'));
+                if (!requestingGame) {
+                    button.classList.add('flood');
+                    init(button);
+                }
+            };
+            buttons.push(button);
+        }
+
+        for (const b of buttons) {
+            sessionsButtons.appendChild(b);
+        }
+    }
+
+
+    function init(el) {
+        el.appendChild(loader);
+        let duration = 750;
+        const dt = 10;
+        let callback = null;
+        setTimeout(async function tock() {
+            if (duration > 0) {
+                duration -= dt
+                setTimeout(tock, dt);
+            } else if (callback) {
+                callback();
+            };
+        }, 1);
+        if (sessionGamesID.length < maxSessions + 1) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/init', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == XMLHttpRequest.DONE) {
+                    const initDone = () => {
+                        el.removeChild(loader);
+                        const json = JSON.parse(xhr.responseText);
+                        sessionGamesID = json.gamesID;
+                        shareGame(sessionGamesID[sessionGamesID.length - 1]);
+                    }
+                    if (duration > 0) {
+                        callback = initDone;
+                    } else {
+                        initDone();
+                    }
+                }
+            }
+            xhr.send();
+        }
+    }
+
+    function play(g) {
+        window.location.href = '../play/' + g;
+    }
+</script>
+
+</html>

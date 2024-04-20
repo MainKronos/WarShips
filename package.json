@@ -1,0 +1,25 @@
+{
+  "name": "warships",
+  "version": "0.3.0",
+  "description": "War Ships in browser",
+  "main": "index.js",
+  "scripts": {
+    "start": "bun index.js"
+  },
+  "dependencies": {
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^4.17.21",
+    "@types/express-session": "^1.18.0",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "request": "^2.88.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MainKronos/WarShips"
+  }
+}
