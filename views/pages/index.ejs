@@ -92,7 +92,6 @@
     const copyButton = select('#copy');
     const matchmaking = select('#matchmaking');
     const playWithFriend = select('#playWithFriend');
-    const playRandom = select('#playRandom');
     const states = [splash, share, sessions, mode, matchmaking];
     const loader = document.createElement('div');
     const sessionsHeader = document.getElementById('sessions-header');
@@ -204,39 +203,22 @@
     }
 
 
-    function init(el) {
+    async function init(el) {
         el.appendChild(loader);
-        let duration = 750;
-        const dt = 10;
-        let callback = null;
-        setTimeout(async function tock() {
-            if (duration > 0) {
-                duration -= dt
-                setTimeout(tock, dt);
-            } else if (callback) {
-                callback();
-            };
-        }, 1);
+
         if (sessionGamesID.length < maxSessions + 1) {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/init', true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState == XMLHttpRequest.DONE) {
-                    const initDone = () => {
-                        el.removeChild(loader);
-                        const json = JSON.parse(xhr.responseText);
-                        sessionGamesID = json.gamesID;
-                        shareGame(sessionGamesID[sessionGamesID.length - 1]);
-                    }
-                    if (duration > 0) {
-                        callback = initDone;
-                    } else {
-                        initDone();
-                    }
-                }
-            }
-            xhr.send();
+
+            let res = await fetch("/init", {
+                method: "POST"
+            });
+
+            const json = await res.json();
+
+            el.removeChild(loader);
+            sessionGamesID = json.gamesID;
+            shareGame(sessionGamesID[sessionGamesID.length - 1]);
         }
+
     }
 
     function play(g) {
